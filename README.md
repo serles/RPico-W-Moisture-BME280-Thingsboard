@@ -1,8 +1,15 @@
 # RPico-W-Moisture-BME280-Thingsboard
-Measure moisture, temperature, atmospheric pressure &amp; humidity and send data to things board with a raspberry pico W
 Author: Sebastian Söll
 
 This project is programmed in micropython on an raspberry pico W and displays the sensor values on a display and on thingsboard.
+Measured data:
+- moisture
+- temperature
+- atmospheric
+- pressure
+- humidity
+
+public thingsboard dashboard: https://demo.thingsboard.io/dashboards/451c3120-940b-11ed-a3a7-a370cc0b9cb6
 
 Used libraries:
 - BME280: from Paul Cunnane 2016, Peter Dahlebrg 2016, borrowed code from Adafruit Tony DiCola
