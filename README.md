@@ -18,9 +18,11 @@ Wiring:
 Display via I2C:
 - SDA on GP0
 - SCL on GP1
+
 BME280 via I2C:
 - SDA on GP20
 - SCL on GP21
+
 moisture sensor via
 - ADC on GP26
 
