@@ -88,15 +88,6 @@ def connect_wlan():
         write_log(timestrg, 'connected')
         status = wlan.ifconfig()
         print( 'ip = ' + status[0] )
-        #refresh RTC
-        try:
-            tm = ntpTime.setTimeRTC()
-            machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
-            print('date:', tm)
-        except Exception as e:
-            print(e.args)
-            write_log(timestrg, e.args)
-            pass   
 
     else:
         while not wlan.isconnected():
@@ -137,6 +128,15 @@ def connect_wlan():
             if wait_count >= max_wait:
                 raise RuntimeError("network connection failed")
                 write_log(timestrg, 'connection failed')
+    #refresh RTC
+    try:
+        tm = ntpTime.setTimeRTC()
+        machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
+        print('date:', tm)
+    except Exception as e:
+        print(e.args)
+        write_log(timestrg, 'RTC' + e.args)
+        pass   
 
 #call wlan connection for the first time
 connect_wlan()
