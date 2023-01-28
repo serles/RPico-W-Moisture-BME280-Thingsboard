@@ -19,9 +19,9 @@ delayIoT = 6 #standard delay 360
 delay_count = 0
 
 #data connection
-KEY = "KAAKFZ4SQAFI3D43"  
-ssid = "NadahaWLAN"
-password = "TSEuse74f5C7DK32h"
+KEY = "thingsboardkey"  
+ssid = "wlan_name"
+password = "wlan_passwd"
 
 #display area
 WIDTH  = 128 # oled display width
@@ -140,9 +140,7 @@ while True:
     temp = float(bme280["temp"])
     pressure = float(bme280["pressure"])
     humidity = float(bme280["humidity"])
-    
-    
-    
+            
     current_time = utime.localtime()
     timestrg = "%02d/%02d/%02d %02d:%02d:%02d" % (current_time[0], current_time[1], current_time[2], current_time[3], current_time[4], current_time[5])
     #send to thinkspeak
