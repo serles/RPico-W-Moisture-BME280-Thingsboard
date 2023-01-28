@@ -12,10 +12,10 @@ import bme280
 soil = ADC(Pin(26)) #Soil moisture Pin reference
 
 min_moisture=19200 #Calibration Values
-max_moisture=49300
+max_moisture=49300 #initial min = 19200; max = 49300
 
-delayOLED = 3 #delay between readings standard 60
-delayIoT = 6 #standard delay 360
+delayOLED = 60 #delay between readings standard 60
+delayIoT = 360 #standard delay 360
 delay_count = 0
 
 #data connection
@@ -47,6 +47,9 @@ wlan.active(True)
 #create path
 file_path = '/logs/log.txt'
 
+timestrg = ""
+timestrgthingsboard = ""
+
 #function to read sensor data
 def read_moisture():
     #read moisture value and convert to percentage into the calibration range
@@ -68,70 +71,78 @@ def update_bme280_reading():
     svalues = {"temp": bme.values[0], "pressure": bme.values[1], "humidity": bme.values[2]}
     return svalues
 
-def connect_wlan():
-    max_wait = 5
-    try:
-        if not wlan.isconnected():
-            print("connecting to network...")
-            oled.fill(0)
-            oled.text("connecting...", 0, 0)
-            oled.show()
-            wlan.connect(ssid,password)
-            utime.sleep(1)
-            # Wait for connect or fail 13 max_wait = 10
-            while max_wait > 0:
-                if wlan.status() < 0 or wlan.status() >= 3:
-                    break
-                max_wait -= 1
-                print('waiting for connection...')
-                utime.sleep(1)
-            max_wait = 5    
-            # same loop but disconnecting each time before reconnecting
-            while max_wait > 0:
-                if wlan.status() < 0 or wlan.status() >= 3:
-                    break
-                wlan.disconnect()
-                max_wait -= 1
-                print('reconnecting...')
-                utime.sleep(2)
-                wlan.connect(ssid,password)
-                utime.sleep(2)
-        
-            if wlan.status() != 3:
-                raise RuntimeError("network connection failed")
-            else:
-                print("connected")
-                status = wlan.ifconfig()
-                print( 'ip = ' + status[0] )
-        else:
-            print("is already connected")
-        
-        if wlan.status() == 3:
-            print("network config:", wlan.ifconfig())
-            try:
-                #refresh RTC
-                tm = ntpTime.setTimeRTC()
-                machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
-                print('date:', tm)
-            except:
-                pass
-    except:
-        oled.fill(0)
-        oled.text("connection failed",5,0)
-        oled.show()
-
-
 def write_log(date, message, value1="", value2="", value3="", value4=""):
     file = open(file_path, "a")
     file.write(date + '\t' + message + '\t' + value1 + '\t' + value2 + '\t' + value3 + '\t' + value4 + '\n')
     file.close()
 
+def connect_wlan():
+    current_time = utime.localtime()
+    timestrg = "%02d/%02d/%02d %02d:%02d:%02d" % (current_time[0], current_time[1], current_time[2], current_time[3], current_time[4], current_time[5])
+    max_wait = 60 * 15 #timer for connection
+    wait = 0
+    wait_count = 0
+    
+    if wlan.status() == 3:
+        print('connected')
+        write_log(timestrg, 'connected')
+        status = wlan.ifconfig()
+        print( 'ip = ' + status[0] )
+        #refresh RTC
+        try:
+            tm = ntpTime.setTimeRTC()
+            machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
+            print('date:', tm)
+        except Exception as e:
+            print(e.args)
+            write_log(timestrg, e.args)
+            pass   
+
+    else:
+        while not wlan.isconnected():
+            wait = 5
+            try:
+                print("connecting to network...")
+                write_log(timestrg, 'connecting')
+                oled.fill(0)
+                oled.text("connecting...", 0, 0)
+                oled.show()
+                wlan.connect(ssid,password)
+                utime.sleep(1)
+                #wait for connection
+                while wait >0:
+                    if wlan.status() == 3:
+                        break
+                    wait -= 1
+                    print('waiting for connection...')
+                    write_log(timestrg, 'waiting for connection')
+                    utime.sleep(1)
+                wait = 5
+                #trying with reconnect
+                while wait > 0:
+                    if wlan.status() == 3:
+                        break
+                    wlan.disconnect()
+                    utime.sleep(3)
+                    wait -= 1
+                    print('reconnecting...')
+                    write_log(timestrg, 'reconnecting')
+                    wlan.connect(ssid,password)
+                    utime.sleep(1)
+            except Exception as e:
+                print(e.args)
+                write_log(timestrg, e.args)
+                
+            wait_count += 11
+            if wait_count >= max_wait:
+                raise RuntimeError("network connection failed")
+                write_log(timestrg, 'connection failed')
+
 #call wlan connection for the first time
 connect_wlan()
        
 utime.sleep(1)
-timestrg = ""
-timestrgthingsboard = ""
+
 
 while True:
     moisture = read_moisture()
@@ -140,7 +151,7 @@ while True:
     temp = float(bme280["temp"])
     pressure = float(bme280["pressure"])
     humidity = float(bme280["humidity"])
-            
+        
     current_time = utime.localtime()
     timestrg = "%02d/%02d/%02d %02d:%02d:%02d" % (current_time[0], current_time[1], current_time[2], current_time[3], current_time[4], current_time[5])
     #send to thinkspeak
@@ -186,7 +197,3 @@ while True:
     #write_log(timestrg, 'Display', str(moisture))
     utime.sleep(delayOLED)
     delay_count += delayOLED
-
-
-##multithreading
-#ray.get([IoT.remote(), display.remote()])
