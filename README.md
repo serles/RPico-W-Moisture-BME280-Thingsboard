@@ -1,7 +1,8 @@
 # RPico-W-Moisture-BME280-Thingsboard
 Author: Sebastian Söll
 
-This project is programmed in micropython on an raspberry pico W and displays the sensor values on a display and on thingsboard.
+This project is programmed in micropython on an raspberry pico W and displays the sensor values on a display and on thingsboard, and it writes everything into a log file.
+
 Measured data:
 - moisture
 - temperature
